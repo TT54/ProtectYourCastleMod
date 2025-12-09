@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @ForgeVoicechatPlugin
-public class VoiceChatPlugin implements VoicechatPlugin {
+public class PYCVoiceChatPlugin implements VoicechatPlugin {
 
     public static VoicechatServerApi voicechatApi;
     private static final List<CompletableFuture<VoicechatApi>> waitingEnabling = new ArrayList<>();
