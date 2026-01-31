@@ -39,6 +39,11 @@ public class PYCVoiceChatPlugin implements VoicechatPlugin {
         }
     }
 
+    public static boolean deleteGroup(UUID groupUUID){
+        if(voicechatApi == null) return false;
+        return voicechatApi.removeGroup(groupUUID);
+    }
+
     public void onPlayerConnected(PlayerConnectedEvent event){
         UUID groupUUID = waitingToJoin.get(event.getConnection().getPlayer().getUuid());
         if(groupUUID != null){
