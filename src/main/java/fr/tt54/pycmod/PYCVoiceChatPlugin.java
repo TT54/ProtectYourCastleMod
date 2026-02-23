@@ -2,11 +2,10 @@ package fr.tt54.pycmod;
 
 import de.maxhenkel.voicechat.api.*;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
+import de.maxhenkel.voicechat.api.events.PlayerConnectedEvent;
 import de.maxhenkel.voicechat.api.events.VoicechatServerStartedEvent;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @ForgeVoicechatPlugin
@@ -14,6 +13,7 @@ public class PYCVoiceChatPlugin implements VoicechatPlugin {
 
     public static VoicechatServerApi voicechatApi;
     private static final List<CompletableFuture<VoicechatApi>> waitingEnabling = new ArrayList<>();
+    public static Map<UUID, UUID> waitingToJoin = new HashMap<>();
 
     @Override
     public String getPluginId() {
@@ -28,6 +28,7 @@ public class PYCVoiceChatPlugin implements VoicechatPlugin {
     @Override
     public void registerEvents(EventRegistration registration) {
         registration.registerEvent(VoicechatServerStartedEvent.class, this::onServerStarted);
+        registration.registerEvent(PlayerConnectedEvent.class, this::onPlayerConnected);
     }
 
     public void onServerStarted(VoicechatServerStartedEvent event) {
@@ -35,6 +36,21 @@ public class PYCVoiceChatPlugin implements VoicechatPlugin {
         PYCMod.LOGGER.info("Voicechat started !");
         for(CompletableFuture<VoicechatApi> future : waitingEnabling){
             future.complete(voicechatApi);
+        }
+    }
+
+    public static boolean deleteGroup(UUID groupUUID){
+        if(voicechatApi == null) return false;
+        return voicechatApi.removeGroup(groupUUID);
+    }
+
+    public void onPlayerConnected(PlayerConnectedEvent event){
+        UUID groupUUID = waitingToJoin.get(event.getConnection().getPlayer().getUuid());
+        if(groupUUID != null){
+            Group group = voicechatApi.getGroup(groupUUID);
+            if(group != null){
+                event.getConnection().setGroup(group);
+            }
         }
     }
 
@@ -61,9 +77,13 @@ public class PYCVoiceChatPlugin implements VoicechatPlugin {
         if(voicechatApi == null) return false;
         Group group = voicechatApi.getGroup(groupUUID);
         VoicechatConnection connection = voicechatApi.getConnectionOf(playerUUID);
-        if(group != null && connection != null){
+        if(group != null && connection != null && connection.isConnected()){
+            System.out.println(connection.isConnected());
             connection.setGroup(group);
             return true;
+        } else {
+            System.out.println(connection);
+            waitingToJoin.put(playerUUID, groupUUID);
         }
         return false;
     }
