@@ -1,16 +1,14 @@
 package fr.tt54.pycmod;
 
 import com.mojang.logging.LogUtils;
-import com.simibubi.create.Create;
-import com.simibubi.create.content.trains.GlobalRailwayManager;
-import com.simibubi.create.content.trains.RailwaySavedData;
-import com.simibubi.create.content.trains.entity.Train;
-import com.simibubi.create.content.trains.graph.DimensionPalette;
-import fr.tt54.pycmod.create_fix.RailwayLoader;
-import net.minecraft.nbt.CompoundTag;
+import fr.tt54.pycmod.events.PYCBukkitEventRegistry;
+import fr.tt54.pycmod.events.PlayerDamagedByPlayerEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -45,5 +43,13 @@ public class PYCMod {
     public void onLevelLoad(LevelEvent.Load event){
         ServerLevel level = ((ServerLevel) event.getLevel());
         // RailwayLoader.loadTrainsForWorld(level);
+    }
+
+    @SubscribeEvent
+    public void onPlayerDamagedByPlayer(LivingDamageEvent event){
+        Entity damager = event.getSource().getEntity();
+        if(event.getEntity() instanceof ServerPlayer attackedPlayer && damager instanceof ServerPlayer damagerPlayer) {
+            PYCBukkitEventRegistry.callPlayerDamagedByPlayerEvent(new PlayerDamagedByPlayerEvent(attackedPlayer.getUUID(), damagerPlayer.getUUID(), event.getAmount()));
+        }
     }
 }
