@@ -1,6 +1,7 @@
 package fr.tt54.pycmod;
 
 import com.mojang.logging.LogUtils;
+import fr.tt54.pycmod.create_fix.RailwayLoader;
 import fr.tt54.pycmod.events.PYCBukkitEventRegistry;
 import fr.tt54.pycmod.events.PlayerDamagedByPlayerEvent;
 import net.minecraft.server.MinecraftServer;
@@ -43,6 +44,7 @@ public class PYCMod {
     public void onLevelLoad(LevelEvent.Load event){
         ServerLevel level = ((ServerLevel) event.getLevel());
         // RailwayLoader.loadTrainsForWorld(level);
+        RailwayLoader.loadTrainsForWorld(level);
     }
 
     @SubscribeEvent

@@ -12,11 +12,12 @@ import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -24,32 +25,28 @@ public class RailwayLoader {
 
     public static void loadTrainsForWorld(ServerLevel level){
         System.out.println("Loading railway information for world " + level.dimension().location());
+        File serverDirectory = level.getServer().getServerDirectory().getParentFile();
+        File levelDirectory = new File(serverDirectory, level.dimension().location().getPath());
+        if(!levelDirectory.exists()) return;
+
+        Create.RAILWAYS.cleanUp();
         RailwaySavedData data = loadFromWorld(level);
 
-        for(Train train : new ArrayList<>(Create.RAILWAYS.trains.values())){
-            if(data.getTrains().containsKey(train.id)){
-                Create.RAILWAYS.removeTrain(train.id);
+        try {
+            Field savedDataField = Create.RAILWAYS.getClass().getDeclaredField("savedData");
+            savedDataField.setAccessible(true);
+            savedDataField.set(Create.RAILWAYS, data);
+            Create.RAILWAYS.trains = data.getTrains();
+            Create.RAILWAYS.trackNetworks = data.getTrackNetworks();
+            Create.RAILWAYS.signalEdgeGroups = data.getSignalBlocks();
+
+            for(ServerPlayer player : level.getServer().getPlayerList().getPlayers()){
+                Create.RAILWAYS.playerLogout(player);
+                Create.RAILWAYS.playerLogin(player);
             }
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            throw new RuntimeException(e);
         }
-
-        for(TrackGraph trackGraph : new ArrayList<>(Create.RAILWAYS.trackNetworks.values())){
-            if(data.getTrackNetworks().containsKey(trackGraph.id)){
-                Create.RAILWAYS.removeGraphAndGroup(trackGraph);
-            }
-        }
-
-        for(SignalEdgeGroup signalEdgeGroup : new ArrayList<>(Create.RAILWAYS.signalEdgeGroups.values())){
-            if(data.getSignalBlocks().containsKey(signalEdgeGroup.id)){
-                Create.RAILWAYS.signalEdgeGroups.remove(signalEdgeGroup.id);
-            }
-        }
-
-
-
-        for(TrackGraph trackGraph : data.getTrackNetworks().values()){
-            Create.RAILWAYS.putGraph(trackGraph);
-        }
-        Create.RAILWAYS.signalEdgeGroups.putAll(data.getSignalBlocks());
 
         for(Train train : data.getTrains().values()){
             Create.RAILWAYS.addTrain(train);
